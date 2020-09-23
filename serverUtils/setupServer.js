@@ -61,7 +61,7 @@ const initServer = async() => {
 
         const mongo = getUsingMongo.value;
 
-        let mongoURL = "mongodb://mongo:27017/personal-drive";
+        let mongoURL = "mongodb://mongo:27018/personal-drive";
 
         if (!mongo) {
             

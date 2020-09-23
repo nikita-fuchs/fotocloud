@@ -93,7 +93,7 @@ class FileController {
          
             res.send(file);
             
-            console.log("file uploaded");
+            console.log("file uploadeddd");
     
         } catch (e) {
             const code = e.code || 500;

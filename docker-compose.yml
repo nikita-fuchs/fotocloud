@@ -13,10 +13,11 @@ services:
     links:
       - mongo
   mongo:
-    container_name: mongo
+    container_name: mongo-mydrive
     image: mongo
+    command: mongod --port 27018
     ports:
-      - '27017:27017'
+      - '27018:27018'
     volumes:
       - 'mongodb_data_volume:/data/db'
 volumes:

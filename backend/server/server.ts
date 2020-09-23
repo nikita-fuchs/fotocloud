@@ -11,10 +11,13 @@ import helmet from "helmet";
 import busboy from "connect-busboy";
 import compression from "compression";
 import http from "http";
+var cors = require('cors')
 
 
 
 const app = express();
+app.use(cors());
+app.options('*', cors());
 const publicPath = path.join(__dirname, "..", "..", "public");
 
 let server: any;

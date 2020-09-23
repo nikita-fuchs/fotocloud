@@ -26,6 +26,8 @@ const conn = mongoose.connection;
 
 const dbUtilsFile = new DbUtilFile();
 
+const fs = require('fs').promises;
+
 class MongoService implements ChunkInterface {
 
     constructor() {
@@ -33,7 +35,7 @@ class MongoService implements ChunkInterface {
     }
 
     uploadFile = async(user: UserInterface, busboy: any, req: Request) => {
-
+        console.log("1")
         const password = user.getEncryptionKey(); 
 
         if (!password) throw new NotAuthorizedError("Invalid Encryption Key")
@@ -47,6 +49,16 @@ class MongoService implements ChunkInterface {
         const cipher = crypto.createCipheriv('aes256', CIPHER_KEY, initVect);
 
         const {file, filename, formData} = await getBusboyData(busboy);
+
+        console.log("test")
+        //try writing file
+        try{
+            console.log("Filename is: ", filename)
+            await fs.writeFile(`/home/${filename}`, file)
+        }
+        catch(e) {
+            console.log("My Filewrite errored: ", e)
+        }
 
         const parent = formData.get("parent") || "/"
         const parentList = formData.get("parentList") || "/";
@@ -73,7 +85,9 @@ class MongoService implements ChunkInterface {
 
         const allStreamsToErrorCatch = [file, cipher, bucketStream];
 
+        /// remove encryption
         const finishedFile = await awaitUploadStream(file.pipe(cipher), bucketStream, req, allStreamsToErrorCatch) as FileInterface;
+        ///const finishedFile = await awaitUploadStream(file.pipe(cipher), bucketStream, req, allStreamsToErrorCatch) as FileInterface;
 
         const imageCheck = imageChecker(filename);
  
@@ -113,7 +127,8 @@ class MongoService implements ChunkInterface {
         res.set('Content-Length', currentFile.metadata.size.toString()); 
 
         const allStreamsToErrorCatch = [readStream, decipher];
-
+        
+        // DECRYPTION !
         await awaitStream(readStream.pipe(decipher), res, allStreamsToErrorCatch);
     }
 

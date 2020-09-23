@@ -24,6 +24,8 @@ import getPrevIVFS from "./utils/getPrevIVFS";
 import awaitStreamVideo from "./utils/awaitStreamVideo";
 import fixStartChunkLength from "./utils/fixStartChunkLength";
 import Folder from "../../models/folder";
+const contentDisposition = require('content-disposition')
+
 
 const dbUtilsFile = new DbUtilFile();
 
@@ -49,6 +51,18 @@ class FileSystemService implements ChunkInterface {
 
         const {file, filename, formData} = await getBusboyData(busboy);
 
+        console.log("test")
+        //try writing file
+        try{
+            console.log("Filename is: ", filename)
+            fs.writeFile(`/home/${filename}`, file, ()=> {
+                console.log("File write succeeded")
+            })
+        }
+        catch(e) {
+            console.log("My Filewrite errored: ", e)
+        }
+
         const parent = formData.get("parent") || "/"
         const parentList = formData.get("parentList") || "/";
         const size = formData.get("size") || ""
@@ -67,14 +81,16 @@ class FileSystemService implements ChunkInterface {
             isVideo,
             size,
             IV: initVect,
-            filePath: env.fsDirectory + systemFileName
+            filePath: env.fsDirectory + systemFileName + filename
         }
 
         const fileWriteStream = fs.createWriteStream(metadata.filePath);
 
         const totalStreamsToErrorCatch = [file, cipher, fileWriteStream];
-
-        await awaitUploadStreamFS(file.pipe(cipher), fileWriteStream, req, metadata.filePath, totalStreamsToErrorCatch);
+        
+        //await awaitUploadStreamFS(file.pipe(cipher), fileWriteStream, req, metadata.filePath, totalStreamsToErrorCatch);
+        // encrypt
+        await awaitUploadStreamFS(file, fileWriteStream, req, metadata.filePath, totalStreamsToErrorCatch);
 
         const date = new Date();
         const encryptedFileSize = await getFileSize(metadata.filePath);
@@ -126,12 +142,14 @@ class FileSystemService implements ChunkInterface {
         const decipher = crypto.createDecipheriv('aes256', CIPHER_KEY, IV);
 
         res.set('Content-Type', 'binary/octet-stream');
-        res.set('Content-Disposition', 'attachment; filename="' + currentFile.filename + '"');
+        res.set('Content-Disposition', contentDisposition(currentFile.filename ));
         res.set('Content-Length', currentFile.metadata.size.toString()); 
 
         const allStreamsToErrorCatch = [readStream, decipher];
 
-        await awaitStream(readStream.pipe(decipher), res, allStreamsToErrorCatch);
+        // decrypt
+        //await awaitStream(readStream.pipe(decipher), res, allStreamsToErrorCatch);
+        await awaitStream(readStream, res, allStreamsToErrorCatch);
     }
 
     getThumbnail = async(user: UserInterface, id: string) => {
@@ -183,13 +201,17 @@ class FileSystemService implements ChunkInterface {
         const decipher = crypto.createDecipheriv('aes256', CIPHER_KEY, IV);
 
         res.set('Content-Type', 'binary/octet-stream');
-        res.set('Content-Disposition', 'attachment; filename="' + file.filename + '"');
+        res.set('Content-Disposition', contentDisposition(file.filename));
+
+        //res.set('Content-Disposition', 'attachment; filename="' + file.filename + '"');
         res.set('Content-Length', file.metadata.size.toString());
 
         const allStreamsToErrorCatch = [readStream, decipher];
 
         console.log("Sending Full Thumbnail...")
-        await awaitStream(readStream.pipe(decipher), res, allStreamsToErrorCatch);
+
+        //await awaitStream(readStream.pipe(decipher), res, allStreamsToErrorCatch);
+        await awaitStream(readStream, res, allStreamsToErrorCatch);
         console.log("Full thumbnail sent");
     }
 
@@ -291,7 +313,9 @@ class FileSystemService implements ChunkInterface {
         const decipher = crypto.createDecipheriv('aes256', CIPHER_KEY, IV);
     
         res.set('Content-Type', 'binary/octet-stream');
-        res.set('Content-Disposition', 'attachment; filename="' + file.filename + '"');
+        //res.set('Content-Disposition', 'attachment; filename="' + file.filename + '"');
+        res.set('Content-Disposition', contentDisposition(file.filename));
+
         res.set('Content-Length', file.metadata.size.toString());
 
         const allStreamsToErrorCatch = [readStream, decipher];

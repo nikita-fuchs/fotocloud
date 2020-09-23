@@ -46,13 +46,15 @@ const createThumbnailFS = (file: FileInterface, filename: string, user: UserInte
     
             const thumbnailCipher = crypto.createCipheriv("aes256", CIPHER_KEY, thumbnailIV);
 
-            const imageResize = sharp().resize(300).on("error", (e: Error) => {
+            const imageResize = sharp().resize(600).on("error", (e: Error) => {
                 
                 console.log("resize error", e);
                 resolve(file);
             })
 
-            readStream.pipe(decipher).pipe(imageResize).pipe(thumbnailCipher).pipe(writeStream);
+            //readStream.pipe(decipher).pipe(imageResize).pipe(thumbnailCipher).pipe(writeStream);
+            //bypass decryption 
+            readStream.pipe(imageResize).pipe(thumbnailCipher).pipe(writeStream);
 
             writeStream.on("finish", async() => {
 

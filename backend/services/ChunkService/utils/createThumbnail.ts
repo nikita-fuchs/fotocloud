@@ -63,13 +63,14 @@ const createThumbnail = (file: FileInterface, filename: string, user: UserInterf
                         resolve(file);
                     })
     
-                    const imageResize = sharp().resize(300).on("error", (e: Error) => {
+                    const imageResize = sharp().resize(600).on("error", (e: Error) => {
                 
                         console.log("resize error", e);
                         resolve(file);
                     })
     
-            readStream.pipe(decipher).pipe(imageResize).pipe(concatStream);
+            //readStream.pipe(decipher).pipe(imageResize).pipe(concatStream);
+            readStream.pipe(imageResize).pipe(concatStream);
     
                             
         } catch (e) {
